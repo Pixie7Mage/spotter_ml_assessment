@@ -90,10 +90,10 @@ def train_expanding_window_validation(df: pd.DataFrame) -> Dict[str, Any]:
 
         m_lgb = lgb.LGBMRegressor(
             objective="regression_l1",
-            n_estimators=800,
-            learning_rate=0.03,
-            num_leaves=45,
-            min_child_samples=25,
+            n_estimators=1000,
+            learning_rate=0.02,
+            num_leaves=35,
+            min_child_samples=30,
             subsample=0.85,
             colsample_bytree=0.85,
             random_state=RANDOM_SEED,
@@ -112,9 +112,9 @@ def train_expanding_window_validation(df: pd.DataFrame) -> Dict[str, Any]:
 
         m_cb = CatBoostRegressor(
             loss_function="MAE",
-            iterations=800,
-            learning_rate=0.035,
-            depth=7,
+            iterations=1000,
+            learning_rate=0.03,
+            depth=6,
             cat_features=["equipment"],
             random_seed=RANDOM_SEED,
             verbose=0,
@@ -124,8 +124,8 @@ def train_expanding_window_validation(df: pd.DataFrame) -> Dict[str, Any]:
         pred_cb = base_val * np.exp(m_cb.predict(X_val_cb))
         cb_metrics = compute_metrics(y_val_rate, pred_cb)
 
-        # Blend (70% LightGBM + 30% CatBoost)
-        pred_blend = 0.70 * pred_lgb + 0.30 * pred_cb
+        # Blend (80% LightGBM + 20% CatBoost)
+        pred_blend = 0.80 * pred_lgb + 0.20 * pred_cb
         blend_metrics = compute_metrics(y_val_rate, pred_blend)
 
         print(f"\n--- {window_name} ---")
@@ -214,10 +214,10 @@ def train_production_kfold_models(
 
         model_lgb = lgb.LGBMRegressor(
             objective="regression_l1",
-            n_estimators=850,
-            learning_rate=0.03,
-            num_leaves=48,
-            min_child_samples=25,
+            n_estimators=1000,
+            learning_rate=0.02,
+            num_leaves=35,
+            min_child_samples=30,
             subsample=0.85,
             colsample_bytree=0.85,
             random_state=RANDOM_SEED + fold,
@@ -237,9 +237,9 @@ def train_production_kfold_models(
 
         model_cb = CatBoostRegressor(
             loss_function="MAE",
-            iterations=850,
-            learning_rate=0.035,
-            depth=7,
+            iterations=1000,
+            learning_rate=0.03,
+            depth=6,
             cat_features=["equipment"],
             random_seed=RANDOM_SEED + fold,
             verbose=0,
@@ -250,10 +250,10 @@ def train_production_kfold_models(
         oof_preds_cb[val_idx] = pred_cb_rate
         cb_models.append(model_cb)
 
-        fold_mae = mean_absolute_error(y_val_true, 0.70 * pred_lgb_rate + 0.30 * pred_cb_rate)
+        fold_mae = mean_absolute_error(y_val_true, 0.80 * pred_lgb_rate + 0.20 * pred_cb_rate)
         print(f"Fold {fold}/{n_splits} - Ensemble MAE: ${fold_mae:.2f}")
 
-    oof_ensemble = 0.70 * oof_preds_lgb + 0.30 * oof_preds_cb
+    oof_ensemble = 0.80 * oof_preds_lgb + 0.20 * oof_preds_cb
     kfold_metrics = compute_metrics(y_true_rates, oof_ensemble)
     print("\n=== Random K-Fold OOF Metrics (Internal Reference) ===")
     print(f"OOF MAE:  ${kfold_metrics['MAE']:.2f}")
@@ -290,6 +290,7 @@ def run_training_pipeline() -> Tuple[List[Any], List[Any], Dict[str, float], Dic
     joblib.dump(mkt_means, models_dir / "mkt_means.joblib")
 
     metrics_summary = {
+        "temporal_validation": expanding_results["final_out_of_time_holdout"],
         "expanding_window_validation": expanding_results,
         "kfold_validation": kfold_metrics
     }

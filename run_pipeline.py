@@ -65,7 +65,14 @@ def main():
         print("ERROR: score.py failed validation!")
         sys.exit(res.returncode)
 
-    print("\nSUCCESS: All predictions validated and chart generated successfully!")
+    # 5. Generate Technical Reports (DOCX and PDF)
+    print("\n" + "="*70)
+    print("STEP 6: GENERATING TECHNICAL ASSESSMENT REPORTS (DOCX & PDF)")
+    print("="*70)
+    from src.report_generator import generate_reports
+    generate_reports()
+
+    print("\nSUCCESS: All predictions validated, chart and reports generated successfully!")
 
 
 if __name__ == "__main__":

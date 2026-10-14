@@ -55,8 +55,8 @@ def predict_validation(
     for m in cb_models:
         cb_log_r += m.predict(cb_X) / len(cb_models)
 
-    # Ensemble blend on log_ratio (70% LightGBM + 30% CatBoost)
-    ensemble_log_r = 0.70 * lgb_log_r + 0.30 * cb_log_r
+    # Ensemble blend on log_ratio (80% LightGBM + 20% CatBoost)
+    ensemble_log_r = 0.80 * lgb_log_r + 0.20 * cb_log_r
     final_predictions = base_quotes * np.exp(ensemble_log_r)
     final_predictions = np.clip(final_predictions, a_min=50.0, a_max=None)
 
@@ -125,7 +125,7 @@ def predict_december_chart_inputs(
     for m in cb_models:
         cb_log_r += m.predict(cb_X) / len(cb_models)
 
-    ensemble_log_r = 0.70 * lgb_log_r + 0.30 * cb_log_r
+    ensemble_log_r = 0.80 * lgb_log_r + 0.20 * cb_log_r
     dec_preds = base_quotes * np.exp(ensemble_log_r)
     dec_preds = np.clip(dec_preds, a_min=50.0, a_max=None)
 
@@ -134,9 +134,7 @@ def predict_december_chart_inputs(
 
     dec_output.to_csv(DECEMBER_INPUTS_PATH, index=False)
     dec_output.to_csv(OUTPUT_DECEMBER_PATH, index=False)
-    root_dec = BASE_DIR / "december-chart-inputs.csv"
-    dec_output.to_csv(root_dec, index=False)
 
-    print(f"Saved December predictions to: {OUTPUT_DECEMBER_PATH} and {root_dec}")
+    print(f"Saved December predictions to: {OUTPUT_DECEMBER_PATH}")
     print(dec_output.head(5))
     return dec_output
